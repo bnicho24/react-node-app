@@ -1,0 +1,129 @@
+// user.js
+const express = require('express');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const multer = require("multer");
+const path = require("path");
+const db = require('./src/config/database');
+
+const router = express.Router();
+
+// Multer setup
+const storage = multer.diskStorage({
+  destination: path.join(__dirname, "uploads"),
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  },
+});
+const upload = multer({ storage });
+
+// Middleware to verify JWT
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if (!token) return res.sendStatus(401);
+
+  jwt.verify(token, process.env.JWT_SECRET || "secret_key", (err, decoded) => {
+    if (err) return res.status(403).send('Token expired or invalid');
+    req.user = decoded;
+    next();
+  });
+}
+router.get("/", (req, res) => {
+  db.query(
+    "SELECT id, name, role, email, created_at, profile_picture FROM users",
+    (err, results) => {
+      if (err) return res.status(500).send(err);
+      res.json(results);
+    }
+  );
+});
+// Routes
+router.post('/register', async (req, res) => {
+  const { name, role, email, password } = req.body;
+  db.query('SELECT * FROM users WHERE email = ?', [email], async (err, results) => {
+    if (err) return res.status(500).send(err);
+    if (results.length > 0) return res.status(400).send('User already exists');
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const createdAt = new Date();
+
+    db.query(
+      'INSERT INTO users (name, role, email, password, created_at) VALUES (?, ?, ?, ?, ?)',
+      [name, role, email, hashedPassword, createdAt],
+      (err) => {
+        if (err) return res.status(500).send(err);
+        res.json({ message: 'User registered successfully' });
+      }
+    );
+  });
+});
+
+router.post('/login', (req, res) => {
+  const { email, password } = req.body;
+  db.query('SELECT * FROM users WHERE email = ?', [email], (err, results) => {
+    if (err) return res.status(500).send(err);
+    if (results.length === 0) return res.status(401).send('User not found');
+
+    const user = results[0];
+    bcrypt.compare(password, user.password, (err, isMatch) => {
+      if (!isMatch) return res.status(401).send('Invalid credentials');
+      const token = jwt.sign({ id: user.id }, 'secret_key', { expiresIn: '1h' });
+      res.json({ token });
+    });
+  });
+});
+
+router.get('/profile', authenticateToken, (req, res) => {
+  db.query('SELECT id, name, role, email, profile_picture, created_at FROM users WHERE id = ?', [req.user.id], (err, results) => {
+    if (err) return res.status(500).send(err);
+    if (results.length === 0) return res.status(404).send('User not found');
+    res.json(results[0]);
+  });
+});
+
+router.put('/profile', authenticateToken, (req, res) => {
+  const { name, role, email } = req.body;
+  const userId = req.user.id;
+  db.query(
+    'UPDATE users SET name = ?, role = ?, email = ? WHERE id = ?',
+    [name, role, email, userId],
+    (err) => {
+      if (err) return res.status(500).send(err);
+      res.json({ message: 'Profile updated successfully' });
+    }
+  );
+});
+
+router.put('/profile/picture', authenticateToken, upload.single("profile_picture"), (req, res) => {
+  const userId = req.user.id;
+  if (!req.file) return res.status(400).send("No file uploaded");
+
+  const imagePath = `/uploads/${req.file.filename}`;
+  db.query("UPDATE users SET profile_picture = ? WHERE id = ?", [imagePath, userId], (err) => {
+    if (err) return res.status(500).send(err);
+    res.json({ message: "Profile picture updated successfully", profile_picture: imagePath });
+  });
+});
+
+router.put("/profile/password", authenticateToken, async (req, res) => {
+  const userId = req.user.id;
+  const { currentPassword, newPassword } = req.body;
+
+  db.query("SELECT * FROM users WHERE id = ?", [userId], async (err, results) => {
+    if (err) return res.status(500).send(err);
+    if (results.length === 0) return res.status(404).send("User not found");
+
+    const user = results[0];
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) return res.status(400).send("Current password is incorrect");
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    db.query("UPDATE users SET password = ? WHERE id = ?", [hashedPassword, userId], (err) => {
+      if (err) return res.status(500).send(err);
+      res.json({ message: "Password updated successfully" });
+    });
+  });
+});
+
+module.exports = router;

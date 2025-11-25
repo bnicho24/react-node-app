@@ -1,0 +1,145 @@
+.App {
+  text-align: center;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+body {
+      min-height: 100vh;
+}
+.page-container {
+  min-height: calc(100vh - 57px);
+  background: #f1f5f9;
+}
+/* Page background */
+.form-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #c1e1fd 0%, #fcfcfc 100%);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Card container */
+.login-card {
+  background: #fff;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  width: 100%;
+  max-width: 400px;
+}
+
+/* Title */
+.login-card h2 {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+  color: #333;
+}
+
+/* Form labels */
+.login-card .form-label {
+  font-weight: 500;
+  color: #444;
+}
+
+/* Inputs */
+.login-card .form-control {
+  border-radius: 8px;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.login-card .form-control:focus {
+  border-color: #4facfe;
+  box-shadow: 0 0 0 0.2rem rgba(79, 172, 254, 0.25);
+}
+
+/* Button */
+.login-card .btn-primary {
+  background: #4facfe;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem;
+  font-weight: 600;
+  transition: background 0.3s;
+}
+
+.login-card .btn-primary:hover {
+  background: #00c6fb;
+}
+
+/* Error messages */
+.login-card .error-text {
+  color: #e63946;
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}
+.sidebar {
+  height: 100%;
+  background-color: #f1f8f5;
+  padding: 10px;
+  border-right: 1px solid #b9cdc3;
+}
+.menu-list {
+    list-style-type: none;
+    padding-left: 0;
+}
+.menu-list li a {
+    padding: 8px 5px;
+    display: block;
+    color: #000;
+    border-bottom: 1px solid #c2ccc7;
+    font-size: 14px;
+    text-decoration: none;
+}
+.menu-list li a span {
+    color: #000;
+    margin-left: 5px;
+}
+.card-img-top {
+  border-bottom: 1px solid #eee;
+}
+
+.card-title {
+  font-weight: 600;
+}
+
+.list-group-item {
+  font-size: 0.95rem;
+}

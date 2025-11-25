@@ -1,0 +1,44 @@
+// products.js
+const express = require("express");
+const db = require("./src/config/database"); // your DB connection
+
+const router = express.Router();
+
+// Get all products (basic info only)
+router.get("/", (req, res) => {
+  db.query("SELECT * FROM products", (err, results) => {
+    if (err) return res.status(500).send(err);
+    res.json(results);
+  });
+});
+
+// Get single product with nested specs + variants
+router.get("/:id", (req, res) => {
+  const productId = req.params.id;
+
+  const productQuery = "SELECT * FROM products WHERE id = ?";
+  const specsQuery = "SELECT * FROM product_specs WHERE product_id = ?";
+  const variantsQuery = "SELECT * FROM product_variants WHERE product_id = ?";
+
+  db.query(productQuery, [productId], (err, productResults) => {
+    if (err) return res.status(500).send(err);
+    if (productResults.length === 0) return res.status(404).send("Product not found");
+
+    const product = productResults[0];
+
+    db.query(specsQuery, [productId], (err, specsResults) => {
+      if (err) return res.status(500).send(err);
+
+      db.query(variantsQuery, [productId], (err, variantResults) => {
+        if (err) return res.status(500).send(err);
+
+        product.specs = specsResults[0] || {};
+        product.variants = variantResults || [];
+
+        res.json(product);
+      });
+    });
+  });
+});
+
+module.exports = router;
